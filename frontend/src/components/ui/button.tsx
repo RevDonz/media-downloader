@@ -44,11 +44,17 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  render,
+  nativeButton,
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
       data-slot="button"
+      render={render}
+      // Bila `render` diisi (mis. <a>/<Link>), elemennya bukan <button> asli,
+      // jadi Base UI butuh nativeButton={false} agar semantik/aksesibilitas benar.
+      nativeButton={nativeButton ?? (render == null)}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

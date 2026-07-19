@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:full": "concurrently -k -n api,next -c magenta,cyan \"npm:backend\" \"npm:dev\"",
-    "backend": "cd ../media-downloader-backend && ./.venv/bin/python -m uvicorn main:app --port 8000 --reload",
+    "backend": "cd ../backend && ./.venv/bin/python -m uvicorn main:app --port 8000 --reload",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
