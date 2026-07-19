@@ -268,13 +268,13 @@ function ModalVideo({ src, poster }: { src?: string; poster?: string }) {
         className="max-h-[80vh] max-w-full rounded-lg bg-black shadow-2xl"
       />
       {buffering && !err && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/90">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-black/60 text-white/90 backdrop-blur-sm">
           <Loader2 className="size-8 animate-spin" />
           <span className="text-xs">Menyiapkan pemutar…</span>
         </div>
       )}
       {err && (
-        <div className="absolute inset-0 flex items-center justify-center text-sm text-white/80">
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/70 text-sm text-white/80">
           Gagal memuat video.
         </div>
       )}

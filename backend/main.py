@@ -15,6 +15,7 @@ import re
 import secrets
 import shutil
 import tempfile
+import threading
 import time
 import zipfile
 from urllib.parse import quote, unquote, urlparse
@@ -24,7 +25,12 @@ import requests
 import yt_dlp
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    Response,
+    StreamingResponse,
+)
 from pydantic import BaseModel
 
 app = FastAPI(title="Media Downloader API")
@@ -686,89 +692,55 @@ def _resolve_play(url):
 # ---- TikTok: URL CDN terikat sesi (403 bila diproxy) → unduh (cache) lalu sajikan ----
 _TT_FILE_CACHE = {}   # url -> (path, tmpdir, ts)
 _TT_TTL = 600
+_TT_LOCKS = {}
+_TT_LOCKS_GUARD = threading.Lock()
 
 
 def _tiktok_file(url):
-    now = time.time()
+    """Unduh video TikTok (cache + kunci per-URL anti unduhan ganda) → path file."""
     hit = _TT_FILE_CACHE.get(url)
-    if hit and now - hit[2] < _TT_TTL and os.path.exists(hit[0]):
+    if hit and time.time() - hit[2] < _TT_TTL and os.path.exists(hit[0]):
         return hit[0]
-    tmp = tempfile.mkdtemp(prefix="ttplay_")
-    opts = {
-        "quiet": True, "no_warnings": True, "noplaylist": True, "socket_timeout": 30,
-        "format": "best[ext=mp4]/mp4/best",
-        "outtmpl": os.path.join(tmp, "v.%(ext)s"),
-    }
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        ydl.extract_info(url, download=True)
-    files = [f for f in os.listdir(tmp) if not f.endswith(".part")]
-    if not files:
-        shutil.rmtree(tmp, ignore_errors=True)
-        raise RuntimeError("tidak ada file terunduh")
-    path = os.path.join(tmp, files[0])
-    _TT_FILE_CACHE[url] = (path, tmp, now)
-    for k, (_p, d, t) in list(_TT_FILE_CACHE.items()):
-        if now - t > _TT_TTL:
-            shutil.rmtree(d, ignore_errors=True)
-            _TT_FILE_CACHE.pop(k, None)
-    return path
-
-
-def _serve_file_range(path, request):
-    size = os.path.getsize(path)
-    ctype = mimetypes.guess_type(path)[0] or "video/mp4"
-    m = re.match(r"bytes=(\d+)-(\d*)", request.headers.get("range") or "")
-    if m:
-        start = int(m.group(1))
-        end = int(m.group(2)) if m.group(2) else size - 1
-        end = min(end, size - 1)
-        length = end - start + 1
-
-        def gen():
-            with open(path, "rb") as f:
-                f.seek(start)
-                left = length
-                while left > 0:
-                    chunk = f.read(min(65536, left))
-                    if not chunk:
-                        break
-                    left -= len(chunk)
-                    yield chunk
-
-        return StreamingResponse(
-            gen(), status_code=206, media_type=ctype,
-            headers={
-                "Content-Range": f"bytes {start}-{end}/{size}",
-                "Accept-Ranges": "bytes",
-                "Content-Length": str(length),
-            },
-        )
-
-    def gen_all():
-        with open(path, "rb") as f:
-            while True:
-                chunk = f.read(65536)
-                if not chunk:
-                    break
-                yield chunk
-
-    return StreamingResponse(
-        gen_all(), media_type=ctype,
-        headers={"Accept-Ranges": "bytes", "Content-Length": str(size)},
-    )
+    with _TT_LOCKS_GUARD:
+        lock = _TT_LOCKS.setdefault(url, threading.Lock())
+    with lock:
+        hit = _TT_FILE_CACHE.get(url)  # cek lagi; mungkin request lain sudah unduh
+        if hit and time.time() - hit[2] < _TT_TTL and os.path.exists(hit[0]):
+            return hit[0]
+        tmp = tempfile.mkdtemp(prefix="ttplay_")
+        opts = {
+            "quiet": True, "no_warnings": True, "noplaylist": True, "socket_timeout": 30,
+            "format": "best[ext=mp4]/mp4/best",
+            "outtmpl": os.path.join(tmp, "v.%(ext)s"),
+        }
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            ydl.extract_info(url, download=True)
+        files = [f for f in os.listdir(tmp) if not f.endswith(".part")]
+        if not files:
+            shutil.rmtree(tmp, ignore_errors=True)
+            raise RuntimeError("tidak ada file terunduh")
+        path = os.path.join(tmp, files[0])
+        now = time.time()
+        _TT_FILE_CACHE[url] = (path, tmp, now)
+        for k, (_p, d, t) in list(_TT_FILE_CACHE.items()):
+            if now - t > _TT_TTL:
+                shutil.rmtree(d, ignore_errors=True)
+                _TT_FILE_CACHE.pop(k, None)
+        return path
 
 
 @app.get("/api/media/play")
 def media_play(request: Request, url: str = ""):
     if not _ytdlp_host_ok(url):
         return Response("URL tidak diizinkan", status_code=403)
-    # TikTok: CDN terikat sesi → unduh dulu (cache), lalu sajikan dari file.
+    # TikTok: CDN terikat sesi → unduh (cache) lalu sajikan file. FileResponse
+    # menangani Range/seek efisien (sendfile), jauh lebih mulus dari stream manual.
     if "tiktok.com" in url.lower():
         try:
             path = _tiktok_file(url)
         except Exception as e:
             return Response(f"gagal memuat video TikTok: {e}", status_code=502)
-        return _serve_file_range(path, request)
+        return FileResponse(path, media_type="video/mp4")
     try:
         direct, hdrs = _resolve_play(url)
     except Exception as e:
