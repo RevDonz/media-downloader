@@ -1,0 +1,12 @@
+# Python (backend)
+backend/.venv/
+**/__pycache__/
+*.pyc
+
+# misc
+*.log
+.env
+.env*.local
+.DS_Store
+
+# frontend punya .gitignore sendiri (node_modules, .next)
