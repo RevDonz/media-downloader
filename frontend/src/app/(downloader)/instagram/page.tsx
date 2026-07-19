@@ -7,6 +7,7 @@ import { useSessionId } from "@/hooks/useSessionId";
 import { useMediaFetch } from "@/hooks/useMediaFetch";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { proxyImg } from "@/lib/media";
+import { igLoginCheck } from "@/lib/api";
 import type { IgTab } from "@/lib/types";
 
 import {
@@ -37,6 +38,26 @@ export default function InstagramPage() {
     open: false,
     index: 0,
   });
+
+  // Verifikasi cookie tersimpan saat halaman dibuka → badge login akurat tanpa harus cari dulu.
+  const [loginUser, setLoginUser] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!sessionid) {
+      setLoginUser(null);
+      return;
+    }
+    let cancelled = false;
+    igLoginCheck(sessionid)
+      .then((r) => {
+        if (!cancelled) setLoginUser(r.ok ? r.username || null : null);
+      })
+      .catch(() => {
+        if (!cancelled) setLoginUser(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionid]);
 
   const items = state.media[tab];
 
@@ -99,7 +120,8 @@ export default function InstagramPage() {
         onChange={setQuery}
         onSubmit={() => query.trim() && search(query.trim())}
         loading={state.loading}
-        loggedIn={state.loggedIn}
+        loggedIn={!!loginUser || state.loggedIn}
+        username={loginUser}
         onOpenSettings={() => setSettingsOpen(true)}
       />
 
@@ -176,6 +198,8 @@ export default function InstagramPage() {
         onOpenChange={setSettingsOpen}
         sessionid={sessionid}
         onSave={save}
+        onVerified={setLoginUser}
+        currentUser={loginUser}
       />
 
       <MediaModal

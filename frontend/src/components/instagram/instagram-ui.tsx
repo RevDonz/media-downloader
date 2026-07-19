@@ -44,6 +44,7 @@ export function IgSearchBar({
   onSubmit,
   loading,
   loggedIn,
+  username,
   onOpenSettings,
 }: {
   value: string;
@@ -51,6 +52,7 @@ export function IgSearchBar({
   onSubmit: () => void;
   loading: boolean;
   loggedIn: boolean;
+  username?: string | null;
   onOpenSettings: () => void;
 }) {
   return (
@@ -80,29 +82,29 @@ export function IgSearchBar({
           )}
           Cari
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={onOpenSettings}
-          aria-label="Pengaturan cookie"
-          className="h-11 w-11 rounded-lg"
-        >
-          <Settings2 className="size-4" />
-        </Button>
+        <div className="relative shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onOpenSettings}
+            aria-label="Pengaturan cookie / login"
+            title={
+              loggedIn
+                ? username
+                  ? "Login sebagai @" + username
+                  : "Login aktif"
+                : "Belum login — klik untuk masuk"
+            }
+            className="h-11 w-11 rounded-lg"
+          >
+            <Settings2 className="size-4" />
+          </Button>
+          {loggedIn && (
+            <span className="absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-background bg-emerald-500" />
+          )}
+        </div>
       </form>
-      <div>
-        {loggedIn ? (
-          <Badge className="gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <ShieldCheck className="size-3" />
-            Login: aktif
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="text-muted-foreground">
-            Belum login
-          </Badge>
-        )}
-      </div>
     </div>
   );
 }
@@ -115,11 +117,15 @@ export function CookieSettingsSheet({
   onOpenChange,
   sessionid,
   onSave,
+  onVerified,
+  currentUser,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   sessionid: string;
   onSave: (v: string) => void;
+  onVerified?: (username: string | null) => void;
+  currentUser?: string | null;
 }) {
   const [value, setValue] = React.useState(sessionid);
   const [checking, setChecking] = React.useState(false);
@@ -128,13 +134,7 @@ export function CookieSettingsSheet({
     if (open) setValue(sessionid);
   }, [open, sessionid]);
 
-  const handleSave = () => {
-    onSave(value.trim());
-    toast.success("Sessionid disimpan.");
-  };
-
-  const handleCheck = async () => {
-    const sid = value.trim();
+  const runCheck = async (sid: string) => {
     if (!sid) {
       toast.error("Isi sessionid dulu.");
       return;
@@ -143,20 +143,32 @@ export function CookieSettingsSheet({
     try {
       const res = await igLoginCheck(sid);
       if (res.ok) {
+        onSave(sid); // simpan cookie yang terbukti valid
+        onVerified?.(res.username || null);
         toast.success("Login sebagai @" + res.username);
       } else {
+        onVerified?.(null);
         toast.error(res.error || "Login gagal.");
       }
     } catch (e) {
+      onVerified?.(null);
       toast.error((e as Error).message);
     } finally {
       setChecking(false);
     }
   };
 
+  const handleSave = () => {
+    onSave(value.trim());
+    runCheck(value.trim()); // simpan + verifikasi (perbarui badge)
+  };
+
+  const handleCheck = () => runCheck(value.trim());
+
   const handleClear = () => {
     setValue("");
     onSave("");
+    onVerified?.(null);
     toast.success("Sessionid dihapus.");
   };
 
@@ -171,6 +183,19 @@ export function CookieSettingsSheet({
         </SheetHeader>
 
         <div className="space-y-4 px-4">
+          <div>
+            {currentUser ? (
+              <Badge className="gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <ShieldCheck className="size-3" />
+                Login sebagai @{currentUser}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-muted-foreground">
+                Belum login
+              </Badge>
+            )}
+          </div>
+
           <div className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">Cara ambil sessionid:</p>
             <ol className="mt-2 list-decimal space-y-1 pl-4">

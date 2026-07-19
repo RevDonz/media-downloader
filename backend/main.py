@@ -683,10 +683,92 @@ def _resolve_play(url):
     return direct, headers
 
 
+# ---- TikTok: URL CDN terikat sesi (403 bila diproxy) → unduh (cache) lalu sajikan ----
+_TT_FILE_CACHE = {}   # url -> (path, tmpdir, ts)
+_TT_TTL = 600
+
+
+def _tiktok_file(url):
+    now = time.time()
+    hit = _TT_FILE_CACHE.get(url)
+    if hit and now - hit[2] < _TT_TTL and os.path.exists(hit[0]):
+        return hit[0]
+    tmp = tempfile.mkdtemp(prefix="ttplay_")
+    opts = {
+        "quiet": True, "no_warnings": True, "noplaylist": True, "socket_timeout": 30,
+        "format": "best[ext=mp4]/mp4/best",
+        "outtmpl": os.path.join(tmp, "v.%(ext)s"),
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        ydl.extract_info(url, download=True)
+    files = [f for f in os.listdir(tmp) if not f.endswith(".part")]
+    if not files:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise RuntimeError("tidak ada file terunduh")
+    path = os.path.join(tmp, files[0])
+    _TT_FILE_CACHE[url] = (path, tmp, now)
+    for k, (_p, d, t) in list(_TT_FILE_CACHE.items()):
+        if now - t > _TT_TTL:
+            shutil.rmtree(d, ignore_errors=True)
+            _TT_FILE_CACHE.pop(k, None)
+    return path
+
+
+def _serve_file_range(path, request):
+    size = os.path.getsize(path)
+    ctype = mimetypes.guess_type(path)[0] or "video/mp4"
+    m = re.match(r"bytes=(\d+)-(\d*)", request.headers.get("range") or "")
+    if m:
+        start = int(m.group(1))
+        end = int(m.group(2)) if m.group(2) else size - 1
+        end = min(end, size - 1)
+        length = end - start + 1
+
+        def gen():
+            with open(path, "rb") as f:
+                f.seek(start)
+                left = length
+                while left > 0:
+                    chunk = f.read(min(65536, left))
+                    if not chunk:
+                        break
+                    left -= len(chunk)
+                    yield chunk
+
+        return StreamingResponse(
+            gen(), status_code=206, media_type=ctype,
+            headers={
+                "Content-Range": f"bytes {start}-{end}/{size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(length),
+            },
+        )
+
+    def gen_all():
+        with open(path, "rb") as f:
+            while True:
+                chunk = f.read(65536)
+                if not chunk:
+                    break
+                yield chunk
+
+    return StreamingResponse(
+        gen_all(), media_type=ctype,
+        headers={"Accept-Ranges": "bytes", "Content-Length": str(size)},
+    )
+
+
 @app.get("/api/media/play")
 def media_play(request: Request, url: str = ""):
     if not _ytdlp_host_ok(url):
         return Response("URL tidak diizinkan", status_code=403)
+    # TikTok: CDN terikat sesi → unduh dulu (cache), lalu sajikan dari file.
+    if "tiktok.com" in url.lower():
+        try:
+            path = _tiktok_file(url)
+        except Exception as e:
+            return Response(f"gagal memuat video TikTok: {e}", status_code=502)
+        return _serve_file_range(path, request)
     try:
         direct, hdrs = _resolve_play(url)
     except Exception as e:
@@ -694,10 +776,10 @@ def media_play(request: Request, url: str = ""):
     if not direct:
         return Response("tidak ada stream yang bisa diputar", status_code=502)
 
-    fwd = {"User-Agent": hdrs.get("User-Agent", UA)}
-    for k in ("Referer", "Origin", "Cookie"):
-        if hdrs.get(k):
-            fwd[k] = hdrs[k]
+    # Teruskan SEMUA header yang diminta yt-dlp (TikTok butuh Referer/Accept/
+    # Sec-Fetch-*; kalau tidak lengkap, CDN membalas 403).
+    fwd = dict(hdrs) if hdrs else {}
+    fwd.setdefault("User-Agent", UA)
     rng = request.headers.get("range")
     if rng:
         fwd["Range"] = rng
