@@ -3,3 +3,4 @@ uvicorn[standard]>=0.29
 instaloader>=4.13
 yt-dlp>=2025.1
 requests>=2.31
+curl_cffi>=0.7

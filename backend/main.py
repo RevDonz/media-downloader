@@ -23,6 +23,10 @@ from urllib.parse import quote, unquote, urlparse
 import instaloader
 import requests
 import yt_dlp
+from curl_cffi import requests as cffi_requests
+from curl_cffi.requests.models import Response as _CffiResponse
+from functools import partial
+from instaloader import instaloadercontext as _ic
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
@@ -60,6 +64,88 @@ UA = (
     "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 )
 
+# --------------------------------------------------------------------------- #
+# Samaran browser (curl_cffi)                                                  #
+# --------------------------------------------------------------------------- #
+# Instagram memblokir klien berdasarkan SIDIK JARI TLS. `requests` mudah dikenali
+# sebagai bot → 403/429, padahal browser (bahkan tanpa login) bisa. curl_cffi
+# meniru handshake TLS Chrome, sehingga permintaan kita diperlakukan seperti
+# browser sungguhan. Ini kunci agar profil publik tetap terbaca.
+IMPERSONATE = "chrome131"
+# UA WAJIB cocok dengan versi yang ditiru. instaloader menimpa header User-Agent
+# saat query GraphQL; UA yang tidak konsisten dengan sidik jari TLS justru
+# membongkar samaran → 403. Karena itu UA yang sama dipakai di sesi curl_cffi
+# DAN di instaloader (lihat build_loader).
+CHROME_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
+IG_APP_ID = "936619743392459"
+
+# curl_cffi.Response tidak punya `is_redirect` yang dipakai instaloader.
+if not hasattr(_CffiResponse, "is_redirect"):
+    _CffiResponse.is_redirect = property(
+        lambda self: 300 <= self.status_code < 400
+        and any(k.lower() == "location" for k in self.headers)
+    )
+
+
+def _copy_session_cffi(session, request_timeout=None):
+    """Pengganti instaloader.copy_session agar query GraphQL ikut tersamar."""
+    n = cffi_requests.Session(impersonate=IMPERSONATE)
+    try:
+        for c in session.cookies.jar:
+            n.cookies.set(c.name, c.value, domain=c.domain or ".instagram.com")
+    except Exception:
+        pass
+    try:
+        n.headers.update(dict(session.headers))
+    except Exception:
+        pass
+    if request_timeout:
+        n.request = partial(n.request, timeout=request_timeout)
+    return n
+
+
+_ic.copy_session = _copy_session_cffi
+
+
+def _cffi_cookie(session, name):
+    val = None
+    try:
+        for c in session.cookies.jar:
+            if c.name == name and c.value:
+                val = c.value
+    except Exception:
+        pass
+    return val
+
+
+def ig_session(sessionid=None):
+    """Sesi HTTP tersamar-browser untuk Instagram (opsional dengan cookie login)."""
+    s = cffi_requests.Session(impersonate=IMPERSONATE)
+    s.headers.update({"User-Agent": CHROME_UA, "X-IG-App-ID": IG_APP_ID})
+    if sessionid:
+        s.cookies.set("sessionid", sessionid, domain=".instagram.com")
+        uid = sessionid.split(":", 1)[0]
+        if uid.isdigit():
+            s.cookies.set("ds_user_id", uid, domain=".instagram.com")
+    try:
+        # "hangatkan" sesi: ambil cookie tamu (datr/ig_did/mid) seperti browser
+        s.get("https://www.instagram.com/", timeout=15)
+    except Exception:
+        pass
+    # Instagram sering TIDAK memberi cookie csrftoken ke klien curl_cffi, padahal
+    # GraphQL ber-login menolak (403) tanpa header X-CSRFToken. Pola CSRF Instagram
+    # adalah double-submit: header cukup COCOK dengan cookie. Jadi kalau tak ada,
+    # kita buat token sendiri dan pasang di cookie + header.
+    csrf = _cffi_cookie(s, "csrftoken")
+    if not csrf:
+        csrf = secrets.token_hex(16)
+        s.cookies.set("csrftoken", csrf, domain=".instagram.com")
+    s.headers.update({"X-CSRFToken": csrf})
+    return s
+
 
 # --------------------------------------------------------------------------- #
 # Helper Instagram (identik dengan versi Flask — framework-agnostic)           #
@@ -95,26 +181,15 @@ def build_loader(sessionid=None):
         max_connection_attempts=1,
         request_timeout=30.0,
     )
-    L.context._session.headers.update({
-        "User-Agent": UA,
-        "X-IG-App-ID": "936619743392459",
-    })
-
-    if sessionid:
-        sessionid = _clean_sessionid(sessionid)
-        L.context._session.cookies.set("sessionid", sessionid, domain=".instagram.com")
-        uid = sessionid.split(":", 1)[0]
-        if uid.isdigit():
-            L.context._session.cookies.set("ds_user_id", uid, domain=".instagram.com")
+    sid = _clean_sessionid(sessionid) if sessionid else None
+    # Sesi tersamar-browser (kunci agar tidak kena 403/429 karena sidik jari TLS)
+    L.context._session = ig_session(sid)
+    # Samakan UA instaloader dengan UA sesi tersamar; instaloader menimpa header
+    # UA saat query GraphQL, dan UA yang tidak konsisten → 403.
+    L.context.user_agent = CHROME_UA
+    if sid:
         try:
-            L.context._session.get("https://www.instagram.com/", timeout=15)
-        except Exception:
-            pass
-        csrf = _cookie_value(L.context._session.cookies, "csrftoken")
-        if csrf:
-            L.context._session.headers.update({"X-CSRFToken": csrf})
-        try:
-            username = L.test_login()
+            username = L.test_login()  # None kalau cookie tidak valid
             if username:
                 L.context.username = username
         except Exception:
@@ -280,10 +355,26 @@ def _web_profile_info(L, username, mobile=False):
         return None
 
 
+def _profile_from_node(L, node):
+    """Bangun Profile dari node web_profile_info.
+
+    Node ini SUDAH lengkap (bio, jumlah, plus halaman pertama post di
+    `edge_owner_to_timeline_media.edges`). Tandai `_has_full_metadata` supaya
+    instaloader tidak menimpanya dengan query lain yang tidak punya `edges`
+    (kalau ditimpa, iterasi post error KeyError: 'edges').
+    """
+    p = instaloader.Profile(L.context, node)
+    p._has_full_metadata = True
+    return p
+
+
 def resolve_profile(L, username):
+    # Jalur cepat: pencarian bawaan instaloader. Sering gagal (akun tersembunyi
+    # dari search, 403, atau rate-limit) — apa pun sebabnya, JANGAN berhenti;
+    # lanjut ke web_profile_info lalu fallback tamu.
     try:
         return instaloader.Profile.from_username(L.context, username)
-    except instaloader.exceptions.ProfileNotExistsException:
+    except Exception:
         pass
 
     node, rate_limited = None, False
@@ -298,7 +389,28 @@ def resolve_profile(L, username):
             pass
 
     if node:
-        return instaloader.Profile(L.context, node)
+        return _profile_from_node(L, node)
+
+    # Fallback TAMU: sebagian akun publik menolak akun login kita, tapi tetap
+    # terbuka untuk pengunjung anonim (sama seperti membuka di browser logout).
+    try:
+        guest = ig_session(None)
+        r = guest.get(
+            "https://www.instagram.com/api/v1/users/web_profile_info/",
+            params={"username": username},
+            headers={"Referer": f"https://www.instagram.com/{username}/"},
+            timeout=20,
+        )
+        if r.status_code == 200:
+            gnode = (r.json().get("data") or {}).get("user")
+            if gnode:
+                # lanjutkan SELURUH pengambilan sebagai tamu (akun login ditolak)
+                L.context._session = guest
+                L.context.username = None
+                return _profile_from_node(L, gnode)
+    except Exception:
+        pass
+
     if rate_limited:
         raise ResolveError(
             f'Akun "{username}" tersembunyi dari pencarian Instagram. '
@@ -399,6 +511,10 @@ def fetch(body: FetchBody):
             _ = profile.mediacount
         else:
             profile = resolve_profile(L, value)
+
+        # resolve_profile bisa turun ke mode TAMU (akun login ditolak profil ini),
+        # jadi status login dihitung ulang agar respons & Story/Highlight akurat.
+        logged_in = bool(L.context.username)
 
         posts_iter = profile.get_posts()
         posts_e, reels_e, has_more = _collect_page(posts_iter, PAGE, profile.username)
