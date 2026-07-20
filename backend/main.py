@@ -651,7 +651,23 @@ def media_info(body: InfoBody):
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as e:
-        return JSONResponse({"error": f"Gagal membaca media: {e}"}, status_code=502)
+        msg = str(e)
+        # yt-dlp memberi pesan yang sama untuk profil private / dihapus / dibatasi.
+        # Terjemahkan jadi pesan yang berguna + solusi praktis.
+        if platform == "tiktok" and "secondary user ID" in msg:
+            return JSONResponse(
+                {"error": "Daftar video profil TikTok ini tidak bisa dibaca — biasanya karena "
+                          "akunnya private, sudah dihapus/ganti nama, atau dibatasi TikTok. "
+                          "SOLUSI: tempel link salah satu VIDEO-nya "
+                          "(contoh: https://www.tiktok.com/@user/video/123…), itu biasanya tetap bisa."},
+                status_code=404,
+            )
+        if "Unable to extract" in msg or "Unsupported URL" in msg:
+            return JSONResponse(
+                {"error": f"Tidak bisa membaca media dari link ini. Pastikan link benar & bisa dibuka publik. ({msg[:120]})"},
+                status_code=404,
+            )
+        return JSONResponse({"error": f"Gagal membaca media: {msg}"}, status_code=502)
 
     if info.get("_type") == "playlist" or "entries" in info:
         items = [_media_item(e, platform) for e in (info.get("entries") or []) if e]
