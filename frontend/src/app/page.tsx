@@ -175,7 +175,7 @@ function Hero() {
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       >
         <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_45%,transparent_100%)]" />
-        <BackgroundBeams className="opacity-60 [mask-image:radial-gradient(ellipse_80%_75%_at_50%_5%,#000_35%,transparent_95%)] dark:opacity-95" />
+        <BackgroundBeams className="opacity-80 [mask-image:linear-gradient(to_bottom,#000_72%,transparent)] dark:opacity-100" />
         <div className="absolute left-1/2 top-[-12%] h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-fuchsia-600/15 via-violet-600/10 to-cyan-500/15 blur-[120px]" />
       </div>
       <div className={cn(container, "flex flex-col items-center text-center")}>

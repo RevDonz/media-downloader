@@ -1,64 +1,94 @@
+"use client";
+
+import React from "react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
-// Server Component murni: SVG statis + animasi CSS (stroke-dashoffset).
-// Tidak ada state/efek → tidak ada JS yang dikirim ke browser.
-const COUNT = 18;
-const W = 1200;
-const H = 620;
+// Komponen resmi Aceternity UI — Background Beams.
+// Sumber: https://ui.aceternity.com/components/background-beams
+// Path dibangun dari rumus asli Aceternity (tiap garis geser +7x / -8y).
+export const BackgroundBeams = React.memo(function BackgroundBeams({
+  className,
+}: {
+  className?: string;
+}) {
+  const paths = Array.from({ length: 51 }, (_, i) => {
+    const dx = 7 * i;
+    const dy = 8 * i;
+    return (
+      `M${-380 + dx} ${-189 - dy}C${-380 + dx} ${-189 - dy} ${-312 + dx} ${216 - dy} ${152 + dx} ${343 - dy}` +
+      `C${616 + dx} ${470 - dy} ${684 + dx} ${875 - dy} ${684 + dx} ${875 - dy}`
+    );
+  });
 
-function beamPath(i: number) {
-  const t = i / (COUNT - 1);
-  const x = t * W;
-  const drift = Math.sin(i * 1.7) * 170; // deterministik → aman dari hydration mismatch
-  const c1x = x + drift;
-  const c2x = x - drift;
-  const endX = x + drift * 0.35;
-  return (
-    `M${x.toFixed(1)} ${H + 60} ` +
-    `C ${c1x.toFixed(1)} ${(H * 0.6).toFixed(1)}, ` +
-    `${c2x.toFixed(1)} ${(H * 0.35).toFixed(1)}, ` +
-    `${endX.toFixed(1)} -60`
-  );
-}
-
-export function BackgroundBeams({ className }: { className?: string }) {
   return (
     <div
-      aria-hidden
       className={cn(
-        "pointer-events-none absolute inset-0 overflow-hidden",
+        "absolute inset-0 flex h-full w-full items-center justify-center",
         className,
       )}
     >
       <svg
-        className="beams absolute inset-0 h-full w-full [filter:blur(0.4px)]"
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="xMidYMid slice"
+        className="pointer-events-none absolute z-0 h-full w-full"
+        width="100%"
+        height="100%"
+        viewBox="0 0 696 316"
         fill="none"
       >
-        <defs>
-          {/* Warna berkas memudar di ujung atas & bawah tiap kurva */}
-          <linearGradient id="beam-line" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" style={{ stopColor: "var(--tt-from)", stopOpacity: 0 }} />
-            <stop offset="45%" style={{ stopColor: "var(--ig-via)", stopOpacity: 0.9 }} />
-            <stop offset="100%" style={{ stopColor: "var(--ig-from)", stopOpacity: 0 }} />
-          </linearGradient>
-        </defs>
-        {Array.from({ length: COUNT }, (_, i) => (
-          <path
-            key={i}
-            d={beamPath(i)}
-            pathLength={100}
-            stroke="url(#beam-line)"
-            strokeWidth={1.4}
-            strokeLinecap="round"
-            style={{
-              animationDuration: `${5 + (i % 6)}s`,
-              animationDelay: `${-(i % 9) * 0.8}s`,
-            }}
+        <path
+          d="M-380 -189C-380 -189 -312 216 152 343C616 470 684 875 684 875"
+          stroke="url(#paint0_radial_beams)"
+          strokeOpacity="0.05"
+          strokeWidth="0.5"
+        />
+        {paths.map((path, index) => (
+          <motion.path
+            key={`path-${index}`}
+            d={path}
+            stroke={`url(#linearGradient-${index})`}
+            strokeOpacity="0.4"
+            strokeWidth="0.5"
           />
         ))}
+        <defs>
+          {paths.map((path, index) => (
+            <motion.linearGradient
+              id={`linearGradient-${index}`}
+              key={`gradient-${index}`}
+              initial={{ x1: "0%", x2: "0%", y1: "0%", y2: "0%" }}
+              animate={{
+                x1: ["0%", "100%"],
+                x2: ["0%", "95%"],
+                y1: ["0%", "100%"],
+                y2: ["0%", `${93 + Math.random() * 8}%`],
+              }}
+              transition={{
+                duration: Math.random() * 10 + 10,
+                ease: "easeInOut",
+                repeat: Infinity,
+                delay: Math.random() * 10,
+              }}
+            >
+              <stop stopColor="#18CCFC" stopOpacity="0" />
+              <stop stopColor="#18CCFC" />
+              <stop offset="0.325" stopColor="#6344F5" />
+              <stop offset="1" stopColor="#AE48FF" stopOpacity="0" />
+            </motion.linearGradient>
+          ))}
+          <radialGradient
+            id="paint0_radial_beams"
+            cx="0"
+            cy="0"
+            r="1"
+            gradientUnits="userSpaceOnUse"
+            gradientTransform="translate(352 34) rotate(90) scale(555 1560)"
+          >
+            <stop offset="0.0666667" stopColor="var(--muted-foreground)" />
+            <stop offset="0.243243" stopColor="var(--muted-foreground)" />
+            <stop offset="0.43594" stopColor="var(--muted-foreground)" stopOpacity="0" />
+          </radialGradient>
+        </defs>
       </svg>
     </div>
   );
-}
+});

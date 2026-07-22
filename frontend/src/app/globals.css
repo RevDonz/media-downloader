@@ -234,27 +234,14 @@
 /* Background Beams — SVG statis; berkas cahaya berjalan di sepanjang kurva
    lewat stroke-dashoffset (pathLength dinormalkan ke 100).
    Server Component: NOL JavaScript dikirim ke klien. */
-.beams path {
-  stroke-dasharray: 12 100;
-  animation: beam-travel linear infinite;
-  will-change: stroke-dashoffset;
-}
-@keyframes beam-travel {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -112; }
-}
 @keyframes text-shimmer {
   to { background-position: -200% 0; }
 }
 
-/* Hormati preferensi hemat gerak: hentikan animasi, sisakan garis samar */
+/* Hormati preferensi hemat gerak untuk teks shimmer.
+   (Background Beams pakai Framer Motion; animasinya JS-driven.) */
 @media (prefers-reduced-motion: reduce) {
   .text-shimmer {
     animation: none !important;
-  }
-  .beams path {
-    animation: none !important;
-    stroke-dasharray: none;
-    opacity: 0.12;
   }
 }
