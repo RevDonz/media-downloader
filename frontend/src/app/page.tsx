@@ -168,8 +168,10 @@ function SiteNav() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden py-20 sm:py-28">
-      {/* Backdrop berlapis: grid halus + Background Beams + glow warna lembut */}
+    <section className="relative isolate overflow-hidden py-20 sm:py-28">
+      {/* Backdrop berlapis: grid halus + Background Beams + glow warna lembut.
+          `isolate` pada <section> membuat stacking context sendiri, sehingga
+          layer -z-10 tampil di belakang konten TAPI di depan bg halaman. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
