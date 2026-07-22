@@ -169,14 +169,14 @@ function SiteNav() {
 function Hero() {
   return (
     <section className="relative isolate overflow-hidden py-20 sm:py-28">
-      {/* Backdrop berlapis: grid halus + Background Beams + glow warna lembut.
+      {/* Backdrop berlapis: dot pattern + Background Beams + glow warna lembut.
           `isolate` pada <section> membuat stacking context sendiri, sehingga
           layer -z-10 tampil di belakang konten TAPI di depan bg halaman. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       >
-        <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_45%,transparent_100%)]" />
+        <div className="absolute inset-0 bg-dot [mask-image:radial-gradient(ellipse_at_center,#000_35%,transparent_80%)]" />
         <BackgroundBeams className="opacity-80 [mask-image:linear-gradient(to_bottom,#000_72%,transparent)] dark:opacity-100" />
         <div className="absolute left-1/2 top-[-12%] h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-fuchsia-600/15 via-violet-600/10 to-cyan-500/15 blur-[120px]" />
       </div>

@@ -214,6 +214,14 @@
       linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 8%, transparent) 1px, transparent 1px);
     background-size: 56px 56px;
   }
+  /* Latar titik-titik (Aceternity dot background), adaptif light/dark */
+  .bg-dot {
+    background-image: radial-gradient(
+      color-mix(in oklch, var(--foreground) 16%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 20px 20px;
+  }
   /* Teks gradient bergerak untuk headline */
   .text-shimmer {
     background-image: linear-gradient(
