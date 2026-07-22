@@ -137,13 +137,6 @@ function SiteNav() {
         <Logo />
         <nav className="flex items-center gap-1.5 sm:gap-2">
           <Button
-            variant="ghost"
-            className="hidden sm:inline-flex"
-            render={<Link href="#fitur" />}
-          >
-            Fitur
-          </Button>
-          <Button
             className="hidden bg-yt text-yt-foreground hover:bg-yt/90 sm:inline-flex"
             render={<Link href="/youtube" />}
           >
