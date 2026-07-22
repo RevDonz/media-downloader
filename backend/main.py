@@ -867,9 +867,17 @@ def _tiktok_file(url):
         if hit and time.time() - hit[2] < _TT_TTL and os.path.exists(hit[0]):
             return hit[0]
         tmp = tempfile.mkdtemp(prefix="ttplay_")
+        # Untuk PEMUTARAN di browser: paksa H.264 (avc1). Format 720p/1080p
+        # TikTok hanya tersedia sebagai bytevc1 = H.265/HEVC yang tidak bisa
+        # diputar sebagian besar browser (hanya audio yang jalan). H.264 mentok
+        # 540p tapi pasti tampil. Fallback ke mp4 apa pun bila tak ada H.264.
         opts = {
             "quiet": True, "no_warnings": True, "noplaylist": True, "socket_timeout": 30,
-            "format": "best[ext=mp4]/mp4/best",
+            "format": (
+                "best[ext=mp4][vcodec^=h264]/best[ext=mp4][vcodec^=avc]/"
+                "best[ext=mp4][vcodec!*=h265][vcodec!*=hev][vcodec!*=bytevc]/"
+                "best[ext=mp4]/best"
+            ),
             "outtmpl": os.path.join(tmp, "v.%(ext)s"),
         }
         with yt_dlp.YoutubeDL(opts) as ydl:
