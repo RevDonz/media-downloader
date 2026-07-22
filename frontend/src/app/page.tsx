@@ -24,9 +24,26 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { GithubIcon } from "@/components/icons/github";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 
 const container = "container mx-auto max-w-6xl px-4 sm:px-6";
 const REPO_URL = "https://github.com/RevDonz/media-downloader";
+
+const supportedSites = [
+  "YouTube",
+  "TikTok",
+  "Instagram",
+  "X · Twitter",
+  "Facebook",
+  "Vimeo",
+  "Reddit",
+  "Twitch",
+  "Dailymotion",
+  "SoundCloud",
+  "Pinterest",
+  "Bilibili",
+  "+1700 lainnya",
+];
 
 type PlatformKey = "download" | "instagram" | "tiktok";
 
@@ -167,10 +184,14 @@ function SiteNav() {
 function Hero() {
   return (
     <section className="relative overflow-hidden py-20 sm:py-28">
+      {/* Backdrop berlapis: grid halus + aurora yang menghanyut (murni CSS) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[500px] w-[900px] max-w-none -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-fuchsia-600/20 via-violet-600/20 to-cyan-500/20 blur-[120px]"
-      />
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_50%,transparent_100%)]" />
+        <div className="aurora absolute left-1/2 top-0 h-[520px] w-[920px] max-w-none -translate-x-1/2 -translate-y-1/3 rounded-full opacity-40 blur-[100px] dark:opacity-50" />
+      </div>
       <div className={cn(container, "flex flex-col items-center text-center")}>
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted-foreground">
           <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
@@ -178,7 +199,8 @@ function Hero() {
         </div>
 
         <h1 className="animate-fade-up mt-6 max-w-3xl text-5xl font-bold tracking-tight sm:text-7xl">
-          Unduh video dari <span className="text-ig-gradient">mana saja</span>
+          Unduh video dari{" "}
+          <span className="text-shimmer bg-clip-text">mana saja</span>
         </h1>
 
         <p className="animate-fade-up mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
@@ -213,6 +235,31 @@ function Hero() {
   );
 }
 
+function SupportedMarquee() {
+  return (
+    <section aria-label="Situs yang didukung" className="pb-4 sm:pb-8">
+      <div className={container}>
+        <p className="mb-5 text-center text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
+          Bekerja dengan ratusan situs
+        </p>
+        <div className="marquee-mask relative overflow-hidden">
+          {/* Track digandakan agar loop mulus; jeda saat di-hover */}
+          <div className="flex w-max animate-marquee gap-3 pr-3 hover:[animation-play-state:paused]">
+            {[...supportedSites, ...supportedSites].map((site, i) => (
+              <span
+                key={i}
+                className="whitespace-nowrap rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-muted-foreground"
+              >
+                {site}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PlatformCards() {
   return (
     <section className="py-20 sm:py-28">
@@ -220,15 +267,16 @@ function PlatformCards() {
         <div className="grid gap-5 md:grid-cols-3">
           {platforms.map(
             ({ key, href, label, desc, Icon, iconBox, glow, chips, primary }) => (
-              <Link key={key} href={href} className="group relative block">
-                <div
-                  aria-hidden
-                  className={cn(
-                    "pointer-events-none absolute -inset-2 -z-10 rounded-[2rem] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-30",
-                    glow,
-                  )}
-                />
-                <Card className="relative flex h-full flex-col overflow-hidden rounded-2xl transition duration-300 group-hover:-translate-y-1 group-hover:border-foreground/20">
+              <SpotlightCard key={key} className="rounded-2xl">
+                <Link href={href} className="group relative block h-full">
+                  <div
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute -inset-2 -z-10 rounded-[2rem] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-30",
+                      glow,
+                    )}
+                  />
+                  <Card className="relative flex h-full flex-col overflow-hidden rounded-2xl transition duration-300 group-hover:-translate-y-1 group-hover:border-foreground/20">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <span
@@ -263,8 +311,9 @@ function PlatformCards() {
                       <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   </CardFooter>
-                </Card>
-              </Link>
+                  </Card>
+                </Link>
+              </SpotlightCard>
             ),
           )}
         </div>
@@ -342,13 +391,22 @@ function CtaBand() {
     <section className="py-20 sm:py-28">
       <div className={container}>
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-600 via-violet-600 to-cyan-500 p-8 text-center sm:p-14">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          {/* sheen lembut + grid halus untuk kedalaman */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-white/20 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 -left-16 size-64 rounded-full bg-white/10 blur-3xl"
+          />
+          <h2 className="relative text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Siap mengunduh?
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-white/80">
+          <p className="relative mx-auto mt-3 max-w-md text-white/80">
             Pilih platform favoritmu dan mulai sekarang juga.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button
               size="lg"
               className="h-11 bg-white text-neutral-900 hover:bg-white/90"
@@ -436,6 +494,7 @@ export default function Home() {
       <SiteNav />
       <main>
         <Hero />
+        <SupportedMarquee />
         <PlatformCards />
         <FeatureGrid />
         <HowItWorks />

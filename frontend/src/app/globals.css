@@ -201,3 +201,71 @@
 @keyframes shimmer {
   100% { transform: translateX(100%); }
 }
+
+/* -------------------------------------------------------------------------
+   Aksen landing bergaya Aceternity — murni CSS (tanpa JS/Framer Motion).
+   Hanya transform/opacity yang dianimasikan (GPU), lambat & hemat daya.
+   ------------------------------------------------------------------------- */
+@layer utilities {
+  /* Latar grid halus, otomatis ikut light/dark, statis = 0 biaya runtime */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--foreground) 8%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 8%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  /* Aurora — blob gradient yang menghanyut pelan */
+  .aurora {
+    background-image:
+      radial-gradient(40% 50% at 20% 30%, color-mix(in oklch, var(--ig-via) 60%, transparent), transparent 70%),
+      radial-gradient(45% 55% at 80% 25%, color-mix(in oklch, var(--tt-from) 60%, transparent), transparent 70%),
+      radial-gradient(55% 60% at 50% 80%, color-mix(in oklch, var(--ig-from) 50%, transparent), transparent 70%);
+    animation: aurora-drift 18s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  /* Teks gradient bergerak untuk headline */
+  .text-shimmer {
+    background-image: linear-gradient(
+      110deg,
+      var(--ig-from),
+      var(--ig-via) 35%,
+      var(--tt-from) 65%,
+      var(--ig-from)
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: text-shimmer 6s linear infinite;
+  }
+  /* Marquee tak terhingga (track digandakan, geser -50%) */
+  .animate-marquee {
+    animation: marquee 34s linear infinite;
+    will-change: transform;
+  }
+  .marquee-mask {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  }
+}
+
+@keyframes aurora-drift {
+  0%   { transform: translate3d(-4%, -2%, 0) scale(1); }
+  50%  { transform: translate3d(4%, 3%, 0) scale(1.08); }
+  100% { transform: translate3d(-2%, 4%, 0) scale(1.04); }
+}
+@keyframes text-shimmer {
+  to { background-position: -200% 0; }
+}
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* Hormati preferensi hemat gerak */
+@media (prefers-reduced-motion: reduce) {
+  .aurora,
+  .text-shimmer,
+  .animate-marquee {
+    animation: none !important;
+  }
+}
