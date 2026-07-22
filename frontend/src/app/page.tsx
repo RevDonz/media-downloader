@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Download,
-  Play,
   Camera,
   Music2,
   ArrowRight,
@@ -26,28 +25,28 @@ import { cn } from "@/lib/utils";
 
 const container = "container mx-auto max-w-6xl px-4 sm:px-6";
 
-type PlatformKey = "youtube" | "instagram" | "tiktok";
+type PlatformKey = "download" | "instagram" | "tiktok";
 
 const platforms: {
   key: PlatformKey;
   href: string;
   label: string;
   desc: string;
-  Icon: typeof Play;
+  Icon: typeof Download;
   iconBox: string;
   glow: string;
   chips: string[];
   primary?: boolean;
 }[] = [
   {
-    key: "youtube",
-    href: "/youtube",
-    label: "YouTube",
-    desc: "Video hingga 1080p, ambil audio MP3, dan seek sebelum unduh.",
-    Icon: Play,
-    iconBox: "bg-yt text-yt-foreground",
-    glow: "bg-yt",
-    chips: ["1080p", "720p", "MP3", "Seek"],
+    key: "download",
+    href: "/download",
+    label: "Downloader Umum",
+    desc: "Tempel link apa saja — YouTube, X, Facebook, Vimeo, ratusan situs.",
+    Icon: Download,
+    iconBox: "bg-foreground text-background",
+    glow: "bg-primary",
+    chips: ["1080p", "MP3", "Seek", "Ratusan situs"],
     primary: true,
   },
   {
@@ -137,10 +136,10 @@ function SiteNav() {
         <Logo />
         <nav className="flex items-center gap-1.5 sm:gap-2">
           <Button
-            className="hidden bg-yt text-yt-foreground hover:bg-yt/90 sm:inline-flex"
-            render={<Link href="/youtube" />}
+            className="hidden bg-foreground text-background hover:bg-foreground/90 sm:inline-flex"
+            render={<Link href="/download" />}
           >
-            <Play className="size-4" /> YouTube
+            <Download className="size-4" /> Downloader
           </Button>
           <Button
             className="hidden bg-ig-gradient text-white hover:opacity-90 sm:inline-flex"
@@ -178,25 +177,25 @@ function Hero() {
         </h1>
 
         <p className="animate-fade-up mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
-          Satu tempat untuk mengunduh YouTube, Instagram, dan TikTok. Cepat,
-          bersih, dan tanpa ribet.
+          Downloader umum untuk ratusan situs, plus Instagram dan TikTok per
+          akun. Cepat, bersih, dan tanpa ribet.
         </p>
 
         <form
-          action="/youtube"
+          action="/download"
           method="get"
           className="animate-fade-up mt-8 flex w-full max-w-xl flex-col gap-3 sm:flex-row"
         >
           <Input
             name="url"
             type="text"
-            placeholder="Tempel link YouTube…"
+            placeholder="Tempel link video apa saja…"
             className="h-12 flex-1 rounded-lg text-base"
           />
           <Button
             type="submit"
             size="lg"
-            className="h-12 rounded-lg bg-yt px-6 text-base text-yt-foreground hover:bg-yt/90"
+            className="h-12 rounded-lg bg-foreground px-6 text-base text-background hover:bg-foreground/90"
           >
             <Download className="size-4" /> Unduh
           </Button>
@@ -348,9 +347,9 @@ function CtaBand() {
             <Button
               size="lg"
               className="h-11 bg-white text-neutral-900 hover:bg-white/90"
-              render={<Link href="/youtube" />}
+              render={<Link href="/download" />}
             >
-              <Play className="size-4" /> YouTube
+              <Download className="size-4" /> Downloader
             </Button>
             <Button
               size="lg"
@@ -394,10 +393,10 @@ function SiteFooter() {
             Platform
           </span>
           <Link
-            href="/youtube"
+            href="/download"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
-            YouTube
+            Downloader
           </Link>
           <Link
             href="/instagram"

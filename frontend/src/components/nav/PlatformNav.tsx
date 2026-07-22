@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Play, Camera, Music2, Download } from "lucide-react";
+import { Camera, Music2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/youtube", label: "YouTube", Icon: Play, icon: "text-yt", label_: "text-yt" },
+  { href: "/download", label: "Downloader", Icon: Download, icon: "text-foreground", label_: "text-foreground" },
   { href: "/instagram", label: "Instagram", Icon: Camera, icon: "text-ig", label_: "text-ig-gradient" },
   { href: "/tiktok", label: "TikTok", Icon: Music2, icon: "text-tt", label_: "text-tt-gradient" },
 ] as const;

@@ -19,7 +19,7 @@ import {
   PlaylistCard,
   EmptyState,
   LoaderSkeleton,
-} from "@/components/youtube/youtube-ui";
+} from "@/components/downloader/downloader-ui";
 
 type Status = "idle" | "loading" | "error" | "single" | "list";
 
@@ -45,7 +45,7 @@ function PlayerBlock({ item }: { item: MediaItem }) {
   );
 }
 
-function YoutubeContent() {
+function DownloadContent() {
   const params = useSearchParams();
   const initialUrl = params.get("url") ?? "";
 
@@ -107,7 +107,7 @@ function YoutubeContent() {
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <h1 className="sr-only">Unduh Video YouTube</h1>
+      <h1 className="sr-only">Unduh Video dari Ratusan Situs</h1>
 
       <div className="mb-8">
         <UrlBar
@@ -180,7 +180,7 @@ function YoutubeContent() {
   );
 }
 
-export default function YoutubePage() {
+export default function DownloadPage() {
   return (
     <Suspense
       fallback={
@@ -189,7 +189,7 @@ export default function YoutubePage() {
         </div>
       }
     >
-      <YoutubeContent />
+      <DownloadContent />
     </Suspense>
   );
 }

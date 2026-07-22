@@ -2,7 +2,9 @@
 // Tipe respons API backend (Flask) — dipetakan persis dari app.py
 // ============================================================================
 
-export type Platform = "youtube" | "tiktok" | "instagram";
+// Downloader umum: backend bisa mengembalikan nama situs apa pun (vimeo, twitter, dll).
+// Union di bawah hanya untuk autocomplete; `(string & {})` mengizinkan string bebas.
+export type Platform = "youtube" | "tiktok" | "instagram" | (string & {});
 export type QualityMode = "video" | "audio";
 
 // ---- YouTube / TikTok (/api/media/*) ----

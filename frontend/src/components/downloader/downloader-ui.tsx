@@ -6,7 +6,6 @@ import {
   Loader2,
   Music,
   Video,
-  Play,
   Download,
   RefreshCw,
   AlertCircle,
@@ -37,7 +36,7 @@ import { Progress } from "@/components/ui/progress";
 
 const EXAMPLES = [
   "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-  "https://youtu.be/9bZkp7q19f0",
+  "https://www.tiktok.com/@tiktok/video/7106594312292453675",
 ];
 
 export function UrlBar({
@@ -70,7 +69,7 @@ export function UrlBar({
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            placeholder="Tempel link video atau playlist YouTube…"
+            placeholder="Tempel link video apa saja — YouTube, TikTok, X, Facebook, Vimeo…"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="h-12 pl-10 text-base"
@@ -79,7 +78,7 @@ export function UrlBar({
         <Button
           type="submit"
           disabled={disabled}
-          className="h-12 bg-yt px-6 text-yt-foreground hover:bg-yt/90"
+          className="h-12 bg-primary px-6 text-primary-foreground hover:bg-primary/90"
         >
           {loading ? (
             <Loader2 className="size-5 animate-spin" />
@@ -159,7 +158,7 @@ export function MediaPlayer({ item }: { item: MediaItem }) {
       {error && (
         <div className="absolute inset-0 grid place-items-center bg-black/70">
           <div className="flex flex-col items-center gap-3 text-white">
-            <AlertCircle className="size-8 text-yt" />
+            <AlertCircle className="size-8 text-primary" />
             <span className="text-sm font-medium">Gagal memuat pemutar.</span>
             <Button
               size="sm"
@@ -199,8 +198,8 @@ export function MediaInfoCard({ item }: { item: MediaItem }) {
         />
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge className="bg-yt text-yt-foreground hover:bg-yt/90">
-              YouTube
+            <Badge className="capitalize bg-primary text-primary-foreground hover:bg-primary/90">
+              {item.platform || "video"}
             </Badge>
             {dur && <Badge variant="secondary">{dur}</Badge>}
           </div>
@@ -267,7 +266,7 @@ export function DownloadPanel({ item }: { item: MediaItem }) {
           {options.map((opt) => (
             <label
               key={opt.id}
-              className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition hover:bg-accent has-[[data-checked]]:border-yt has-[[data-checked]]:bg-yt/5"
+              className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition hover:bg-accent has-[[data-checked]]:border-primary has-[[data-checked]]:bg-primary/5"
             >
               <RadioGroupItem value={opt.id} />
               {opt.mode === "audio" ? (
@@ -291,7 +290,7 @@ export function DownloadPanel({ item }: { item: MediaItem }) {
         <Button
           onClick={handleDownload}
           disabled={!selected}
-          className="h-11 w-full bg-yt text-yt-foreground hover:bg-yt/90"
+          className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Download className="size-4" />
           Unduh {selected?.label ?? ""}
@@ -362,15 +361,15 @@ export function PlaylistCard({
 export function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-surface py-20 text-center animate-fade-up">
-      <div className="grid size-16 place-items-center rounded-2xl bg-yt/10 text-yt">
-        <Play className="size-8" />
+      <div className="grid size-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+        <Download className="size-8" />
       </div>
       <p className="text-base font-medium text-muted-foreground">
-        Tempel link YouTube untuk mulai
+        Tempel link video untuk mulai
       </p>
       <p className="max-w-sm text-sm text-muted-foreground/80">
-        Dukung video tunggal maupun playlist. Unduh video atau ekstrak audio
-        (MP3).
+        Dukung ratusan situs — YouTube, TikTok, X, Facebook, Vimeo, dan lainnya.
+        Unduh video atau ekstrak audio (MP3).
       </p>
     </div>
   );

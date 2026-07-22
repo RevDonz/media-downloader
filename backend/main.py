@@ -9,10 +9,12 @@ Frontend Next.js mem-proxy /api/* ke server ini.
 """
 
 import io
+import ipaddress
 import mimetypes
 import os
 import re
 import secrets
+import socket
 import shutil
 import tempfile
 import threading
@@ -690,12 +692,37 @@ def detect_platform(query):
         return "tiktok"
     if "youtube.com" in q or "youtu.be" in q:
         return "youtube"
-    return "instagram"
+    if "instagram.com" in q:
+        return "instagram"
+    host = (urlparse(query).hostname or "").lower().replace("www.", "")
+    return host.split(".")[0] if host else "video"
 
 
 def _ytdlp_host_ok(url):
-    host = (urlparse(url).hostname or "").lower()
-    return any(host == d or host.endswith("." + d) for d in YTDLP_HOSTS)
+    """Downloader UMUM: izinkan URL http(s) publik apa pun (yt-dlp mendukung
+    ~1750 situs), tapi BLOKIR host internal/privat untuk mencegah SSRF."""
+    try:
+        p = urlparse(url)
+    except Exception:
+        return False
+    if p.scheme not in ("http", "https") or not p.hostname:
+        return False
+    host = p.hostname.lower()
+    if host == "localhost" or host.endswith(".local") or host.endswith(".internal"):
+        return False
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except Exception:
+        return False
+    for info in infos:
+        try:
+            addr = ipaddress.ip_address(info[4][0])
+        except Exception:
+            return False
+        if (addr.is_private or addr.is_loopback or addr.is_link_local
+                or addr.is_reserved or addr.is_multicast or addr.is_unspecified):
+            return False
+    return True
 
 
 def _is_collection(url):
@@ -756,7 +783,7 @@ def _qualities_from_info(info):
 def media_info(body: InfoBody):
     url = (body.url or "").strip()
     if not _ytdlp_host_ok(url):
-        return JSONResponse({"error": "Hanya URL YouTube atau TikTok yang didukung."}, status_code=400)
+        return JSONResponse({"error": "Masukkan link video yang valid (diawali http/https)."}, status_code=400)
     platform = detect_platform(url)
     opts = {"quiet": True, "no_warnings": True, "skip_download": True, "socket_timeout": 30}
     if _is_collection(url):
