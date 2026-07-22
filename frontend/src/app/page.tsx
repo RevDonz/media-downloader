@@ -25,25 +25,10 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { GithubIcon } from "@/components/icons/github";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
+import { BackgroundBeams } from "@/components/ui/background-beams";
 
 const container = "container mx-auto max-w-6xl px-4 sm:px-6";
 const REPO_URL = "https://github.com/RevDonz/media-downloader";
-
-const supportedSites = [
-  "YouTube",
-  "TikTok",
-  "Instagram",
-  "X · Twitter",
-  "Facebook",
-  "Vimeo",
-  "Reddit",
-  "Twitch",
-  "Dailymotion",
-  "SoundCloud",
-  "Pinterest",
-  "Bilibili",
-  "+1700 lainnya",
-];
 
 type PlatformKey = "download" | "instagram" | "tiktok";
 
@@ -184,13 +169,14 @@ function SiteNav() {
 function Hero() {
   return (
     <section className="relative overflow-hidden py-20 sm:py-28">
-      {/* Backdrop berlapis: grid halus + aurora yang menghanyut (murni CSS) */}
+      {/* Backdrop berlapis: grid halus + Background Beams + glow warna lembut */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       >
-        <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_50%,transparent_100%)]" />
-        <div className="aurora absolute left-1/2 top-0 h-[520px] w-[920px] max-w-none -translate-x-1/2 -translate-y-1/3 rounded-full opacity-40 blur-[100px] dark:opacity-50" />
+        <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_45%,transparent_100%)]" />
+        <BackgroundBeams className="opacity-60 [mask-image:radial-gradient(ellipse_80%_75%_at_50%_5%,#000_35%,transparent_95%)] dark:opacity-95" />
+        <div className="absolute left-1/2 top-[-12%] h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-fuchsia-600/15 via-violet-600/10 to-cyan-500/15 blur-[120px]" />
       </div>
       <div className={cn(container, "flex flex-col items-center text-center")}>
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -230,31 +216,6 @@ function Hero() {
         <p className="mt-3 text-xs text-muted-foreground">
           Atau pilih platform di bawah
         </p>
-      </div>
-    </section>
-  );
-}
-
-function SupportedMarquee() {
-  return (
-    <section aria-label="Situs yang didukung" className="pb-4 sm:pb-8">
-      <div className={container}>
-        <p className="mb-5 text-center text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
-          Bekerja dengan ratusan situs
-        </p>
-        <div className="marquee-mask relative overflow-hidden">
-          {/* Track digandakan agar loop mulus; jeda saat di-hover */}
-          <div className="flex w-max animate-marquee gap-3 pr-3 hover:[animation-play-state:paused]">
-            {[...supportedSites, ...supportedSites].map((site, i) => (
-              <span
-                key={i}
-                className="whitespace-nowrap rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-muted-foreground"
-              >
-                {site}
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -494,7 +455,6 @@ export default function Home() {
       <SiteNav />
       <main>
         <Hero />
-        <SupportedMarquee />
         <PlatformCards />
         <FeatureGrid />
         <HowItWorks />
