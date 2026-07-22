@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Lock, ImageOff } from "lucide-react";
+import { Lock, ImageOff, Settings2 } from "lucide-react";
 
 import { useSessionId } from "@/hooks/useSessionId";
 import { useMediaFetch } from "@/hooks/useMediaFetch";
@@ -20,12 +20,12 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  IgSearchBar,
   ProfileCard,
   CookieSettingsSheet,
   WarningAlerts,
   MediaTabs,
 } from "@/components/instagram/instagram-ui";
+import { AccountHeader, AccountSearchBar } from "@/components/downloader/account-ui";
 
 export default function InstagramPage() {
   const { sessionid, save } = useSessionId();
@@ -105,24 +105,43 @@ export default function InstagramPage() {
 
   return (
     <div className="container mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">
-          <span className="text-ig-gradient">Instagram</span> Downloader
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Unduh foto, video, Reels, Story, dan Highlight dari akun publik. Untuk
-          akun privat, Story, dan Highlight diperlukan login.
-        </p>
-      </div>
+      <AccountHeader
+        brand="Instagram"
+        brandClassName="text-ig-gradient"
+        description="Unduh foto, video, Reels, Story, dan Highlight dari akun publik. Untuk akun privat, Story, dan Highlight diperlukan login."
+      />
 
-      <IgSearchBar
+      <AccountSearchBar
         value={query}
         onChange={setQuery}
         onSubmit={() => query.trim() && search(query.trim())}
         loading={state.loading}
-        loggedIn={!!loginUser || state.loggedIn}
-        username={loginUser}
-        onOpenSettings={() => setSettingsOpen(true)}
+        placeholder="Username atau tautan Instagram…"
+        buttonClassName="bg-ig-gradient"
+        trailing={
+          <div className="relative shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Pengaturan cookie / login"
+              title={
+                !!loginUser || state.loggedIn
+                  ? loginUser
+                    ? "Login sebagai @" + loginUser
+                    : "Login aktif"
+                  : "Belum login — klik untuk masuk"
+              }
+              className="h-11 w-11 rounded-lg"
+            >
+              <Settings2 className="size-4" />
+            </Button>
+            {(!!loginUser || state.loggedIn) && (
+              <span className="absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-background bg-emerald-500" />
+            )}
+          </div>
+        }
       />
 
       {state.error && (

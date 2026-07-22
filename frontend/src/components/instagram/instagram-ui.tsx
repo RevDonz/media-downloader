@@ -2,8 +2,6 @@
 
 import * as React from "react";
 import {
-  Search,
-  Settings2,
   Loader2,
   BadgeCheck,
   Info,
@@ -34,80 +32,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-
-// ---------------------------------------------------------------------------
-// IgSearchBar
-// ---------------------------------------------------------------------------
-export function IgSearchBar({
-  value,
-  onChange,
-  onSubmit,
-  loading,
-  loggedIn,
-  username,
-  onOpenSettings,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  loading: boolean;
-  loggedIn: boolean;
-  username?: string | null;
-  onOpenSettings: () => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit();
-        }}
-        className="flex items-center gap-2"
-      >
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Username atau tautan Instagram…"
-          className="h-11 flex-1 rounded-lg text-base"
-        />
-        <Button
-          type="submit"
-          disabled={loading}
-          className="h-11 gap-2 rounded-lg bg-ig-gradient px-5 text-white hover:opacity-90"
-        >
-          {loading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Search className="size-4" />
-          )}
-          Cari
-        </Button>
-        <div className="relative shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={onOpenSettings}
-            aria-label="Pengaturan cookie / login"
-            title={
-              loggedIn
-                ? username
-                  ? "Login sebagai @" + username
-                  : "Login aktif"
-                : "Belum login — klik untuk masuk"
-            }
-            className="h-11 w-11 rounded-lg"
-          >
-            <Settings2 className="size-4" />
-          </Button>
-          {loggedIn && (
-            <span className="absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-background bg-emerald-500" />
-          )}
-        </div>
-      </form>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // CookieSettingsSheet
