@@ -415,10 +415,12 @@ function SiteFooter() {
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="GitHub"
+            title="GitHub"
+            className="inline-grid size-9 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <GithubIcon className="size-4" />
-            <span>Lihat di GitHub</span>
+            <GithubIcon className="size-5" />
+            <span className="sr-only">GitHub</span>
           </a>
         </div>
         <nav className="flex flex-col gap-2 text-sm">
