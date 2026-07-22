@@ -4,11 +4,6 @@ import {
   Camera,
   Music2,
   ArrowRight,
-  PlayCircle,
-  Sparkles,
-  Infinity as InfinityIcon,
-  KeyRound,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,34 +67,6 @@ const platforms: {
     iconBox: "bg-tt-gradient text-white",
     glow: "bg-tt",
     chips: ["No watermark", "Grid", "Profil"],
-  },
-];
-
-const features: { Icon: typeof PlayCircle; title: string; text: string }[] = [
-  {
-    Icon: PlayCircle,
-    title: "Putar sebelum unduh",
-    text: "Pratinjau video langsung di browser supaya kamu yakin sebelum menyimpan.",
-  },
-  {
-    Icon: Sparkles,
-    title: "Pilihan kualitas & MP3",
-    text: "Pilih resolusi terbaik atau ekstrak audio ke MP3 hanya dengan satu klik.",
-  },
-  {
-    Icon: InfinityIcon,
-    title: "Infinite scroll cepat",
-    text: "Muat ratusan konten profil secara mulus tanpa ganti-ganti halaman.",
-  },
-  {
-    Icon: KeyRound,
-    title: "Login via cookie (opsional)",
-    text: "Tempel sessionid untuk membuka Story dan konten privat yang kamu ikuti.",
-  },
-  {
-    Icon: ShieldCheck,
-    title: "Privasi diutamakan",
-    text: "Tanpa akun, tanpa penyimpanan link. Semua diproses lalu dilupakan.",
   },
 ];
 
@@ -283,41 +250,6 @@ function PlatformCards() {
   );
 }
 
-function FeatureGrid() {
-  return (
-    <section id="fitur" className="scroll-mt-20 py-20 sm:py-28">
-      <div className={container}>
-        <div className="max-w-2xl">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Semua yang kamu butuhkan
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Dirancang untuk cepat dan enak dipakai, dari pratinjau sampai unduh.
-          </p>
-        </div>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {features.map(({ Icon, title, text }, i) => (
-            <div
-              key={title}
-              className={cn(
-                "rounded-2xl border border-border bg-card p-6 transition hover:border-foreground/20",
-                i === 0 && "md:col-span-2",
-                i === 3 && "md:col-span-2",
-              )}
-            >
-              <span className="grid size-10 place-items-center rounded-xl bg-muted text-foreground">
-                <Icon className="size-5" />
-              </span>
-              <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{text}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function HowItWorks() {
   return (
     <section className="py-20 sm:py-28">
@@ -458,7 +390,6 @@ export default function Home() {
       <main>
         <Hero />
         <PlatformCards />
-        <FeatureGrid />
         <HowItWorks />
         <CtaBand />
       </main>
