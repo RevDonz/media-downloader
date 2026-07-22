@@ -22,8 +22,11 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { GithubIcon } from "@/components/icons/github";
 
 const container = "container mx-auto max-w-6xl px-4 sm:px-6";
+const REPO_URL = "https://github.com/RevDonz/media-downloader";
 
 type PlatformKey = "download" | "instagram" | "tiktok";
 
@@ -153,6 +156,8 @@ function SiteNav() {
           >
             <Music2 className="size-4" /> TikTok
           </Button>
+          <span className="mx-0.5 h-5 w-px bg-border" />
+          <ThemeToggle />
         </nav>
       </div>
     </header>
@@ -387,6 +392,15 @@ function SiteFooter() {
             Hanya untuk konten yang kamu miliki haknya. Hormati hak cipta & ToS
             platform.
           </p>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <GithubIcon className="size-4" />
+            <span>Lihat di GitHub</span>
+          </a>
         </div>
         <nav className="flex flex-col gap-2 text-sm">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

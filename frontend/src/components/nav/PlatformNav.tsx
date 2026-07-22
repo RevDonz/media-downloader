@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Camera, Music2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const NAV = [
   { href: "/download", label: "Downloader", Icon: Download, icon: "text-foreground", label_: "text-foreground" },
@@ -42,6 +43,8 @@ export function PlatformNav() {
               </Link>
             );
           })}
+          <span className="mx-1 h-5 w-px bg-border" />
+          <ThemeToggle />
         </nav>
       </div>
     </header>
