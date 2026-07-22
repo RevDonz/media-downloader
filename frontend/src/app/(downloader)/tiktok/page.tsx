@@ -101,18 +101,16 @@ export default function TiktokPage() {
           </Grid>
           <div ref={sentinelRef} className="h-1" />
         </>
-      ) : (
+      ) : state.loaded ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface py-20 text-center animate-fade-up">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-surface-2">
             <Music2 className="size-7 text-tt" />
           </div>
           <p className="text-muted-foreground">
-            {state.loaded
-              ? "Tidak ada media ditemukan dari link ini."
-              : "Tempel username atau link TikTok untuk mulai."}
+            Tidak ada media ditemukan dari link ini.
           </p>
         </div>
-      )}
+      ) : null}
 
       <MediaModal
         open={modalOpen}
